@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Köməkçi</title>
+</head>
+<body>
+  <h1>AI Köməkçi</h1>
+  <input id="messageInput" type="text" placeholder="Suallarınızı yazın..." />
+  <button id="sendBtn">Göndər</button>
+  <div id="response" style="margin-top:20px; white-space: pre-wrap;"></div>
+
+  <script>
+    const sendBtn = document.getElementById('sendBtn');
+    const messageInput = document.getElementById('messageInput');
+    const responseDiv = document.getElementById('response');
+
+    sendBtn.onclick = async () => {
+      const message = messageInput.value.trim();
+      if (!message) {
+        alert('Zəhmət olmasa sual yazın.');
+        return;
+      }
+
+      responseDiv.textContent = 'Cavab gözlənilir...';
+
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+          responseDiv.textContent = 'Xəta: ' + data.error;
+        } else {
+          responseDiv.textContent = data.choices[0].message.content;
+        }
+      } catch (err) {
+        responseDiv.textContent = 'Serverə qoşulma xətası.';
+      }
+    };
+  </script>
+</body>
+</html>

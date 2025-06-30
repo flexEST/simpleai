@@ -1,39 +1,47 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import fetch from 'node-fetch';
+const express = require('express');
+const fetch = require('node-fetch');
+const path = require('path');
+require('dotenv').config();
 
-dotenv.config();
 const app = express();
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public')); // HTML buradan yüklənir
+const PORT = process.env.PORT || 3000;
 
+app.use(express.json());
+
+// HTML faylını göstər
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// AI cavab endpointi
 app.post('/ask', async (req, res) => {
     const userMessage = req.body.message;
 
     try {
-        const apiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
             },
             body: JSON.stringify({
-                model: "gpt-3.5-turbo",
+                model: 'gpt-3.5-turbo',
                 messages: [
-                    { role: "system", content: "Yalnız Azərbaycan dilində cavab verin." },
-                    { role: "user", content: userMessage }
+                    { role: 'system', content: 'Yalnız Azərbaycan dilində cavab verin.' },
+                    { role: 'user', content: userMessage }
                 ]
             })
         });
 
-        const data = await apiRes.json();
-        res.json({ reply: data.choices?.[0]?.message?.content });
-
+        const data = await response.json();
+        const reply = data.choices?.[0]?.message?.content || "Cavab tapılmadı.";
+        res.json({ reply });
     } catch (error) {
-        res.status(500).json({ error: "API xətası" });
+        console.error("API xətası:", error);
+        res.status(500).json({ reply: "AI xidmətinə qoşula bilmədik." });
     }
 });
 
-app.listen(3000, () => console.log("Server işə düşdü: http://localhost:3000"));
+app.listen(PORT, () => {
+    console.log(`Server işə düşdü: http://localhost:${PORT}`);
+});
